@@ -2,7 +2,7 @@ import { SpaceHeader } from "@/components/SpaceHeader";
 import { SplitScheduleBanner } from "@/components/SplitScheduleBanner";
 import { ContextJournal } from "@/components/ContextJournal";
 import { CalendarView } from "@/components/CalendarView";
-import { TemplateBank } from "@/components/TemplateBank";
+import { PublishChecklist } from "@/components/PublishChecklist";
 
 export default function Home() {
   return (
@@ -12,7 +12,7 @@ export default function Home() {
         <SplitScheduleBanner />
         <ContextJournal />
         <CalendarView />
-        <TemplateBank />
+        <PublishChecklist />
       </div>
     </main>
   );

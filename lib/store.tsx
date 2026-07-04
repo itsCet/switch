@@ -3,47 +3,43 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import {
   CalendarEvent,
+  ChecklistItem,
   DraftPost,
   Deadline,
   JournalEntry,
-  Partner,
   SpaceId,
-  Template,
 } from "./types";
 import {
   SEED_CALENDAR,
+  SEED_CHECKLIST,
   SEED_DEADLINES,
   SEED_DRAFTS,
   SEED_JOURNAL,
-  SEED_PARTNERS,
-  SEED_TEMPLATES,
 } from "./seed";
 
 interface SwitchState {
   activeSpace: SpaceId;
   drafts: DraftPost[];
   deadlines: Deadline[];
-  partners: Partner[];
   calendar: CalendarEvent[];
-  templates: Template[];
+  checklist: ChecklistItem[];
   journal: JournalEntry[];
 }
 
 interface SwitchStore extends SwitchState {
   setActiveSpace: (space: SpaceId) => void;
   updateJournal: (space: SpaceId, patch: Partial<Omit<JournalEntry, "space">>) => void;
-  useTemplate: (id: string) => void;
+  toggleChecklistItem: (id: string) => void;
 }
 
-const STORAGE_KEY = "switch-app-state-v1";
+const STORAGE_KEY = "switch-app-state-v2";
 
 const DEFAULT_STATE: SwitchState = {
   activeSpace: "gtp",
   drafts: SEED_DRAFTS,
   deadlines: SEED_DEADLINES,
-  partners: SEED_PARTNERS,
   calendar: SEED_CALENDAR,
-  templates: SEED_TEMPLATES,
+  checklist: SEED_CHECKLIST,
   journal: SEED_JOURNAL,
 };
 
@@ -83,17 +79,11 @@ export function SwitchProvider({ children }: { children: ReactNode }) {
               : entry
           ),
         })),
-      useTemplate: (id) =>
+      toggleChecklistItem: (id) =>
         setState((s) => ({
           ...s,
-          templates: s.templates.map((t) =>
-            t.id === id
-              ? {
-                  ...t,
-                  usageCount: t.usageCount + 1,
-                  lastUsed: new Date().toISOString().slice(0, 10),
-                }
-              : t
+          checklist: s.checklist.map((item) =>
+            item.id === id ? { ...item, checked: !item.checked } : item
           ),
         })),
     }),

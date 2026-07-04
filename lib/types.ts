@@ -32,15 +32,6 @@ export interface Deadline {
   kind: "match" | "shooting" | "partenaire" | "publication" | "reunion";
 }
 
-export interface Partner {
-  id: string;
-  space: SpaceId;
-  name: string;
-  lastContact: string;
-  status: "en attente" | "relance envoyee" | "confirme" | "a contacter";
-  note: string;
-}
-
 export interface CalendarEvent {
   id: string;
   space: SpaceId;
@@ -50,14 +41,11 @@ export interface CalendarEvent {
   time?: string;
 }
 
-export interface Template {
+export interface ChecklistItem {
   id: string;
   space: SpaceId;
-  name: string;
-  format: string;
-  description: string;
-  usageCount: number;
-  lastUsed: string;
+  label: string;
+  checked: boolean;
 }
 
 export interface JournalEntry {

@@ -6,7 +6,7 @@ import { formatDateFr, formatRelative } from "@/lib/utils";
 import { SpaceSwitcher } from "./SpaceSwitcher";
 
 export function SpaceHeader() {
-  const { activeSpace, drafts, deadlines, partners } = useSwitchStore();
+  const { activeSpace, drafts, deadlines } = useSwitchStore();
   const space = SPACES[activeSpace];
 
   const lastDraft = drafts
@@ -16,10 +16,6 @@ export function SpaceHeader() {
   const nextDeadline = deadlines
     .filter((d) => d.space === activeSpace)
     .sort((a, b) => +new Date(a.date) - +new Date(b.date))[0];
-
-  const lastPartner = partners
-    .filter((p) => p.space === activeSpace)
-    .sort((a, b) => +new Date(b.lastContact) - +new Date(a.lastContact))[0];
 
   return (
     <div className={`bg-gradient-to-br ${space.gradient} text-white rounded-3xl p-6 sm:p-8 shadow-xl`}>
@@ -32,7 +28,7 @@ export function SpaceHeader() {
         <SpaceSwitcher />
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <InfoCard
           label="Dernier post en brouillon"
           title={lastDraft ? lastDraft.title : "Aucun brouillon"}
@@ -43,12 +39,6 @@ export function SpaceHeader() {
           label="Prochaine echeance"
           title={nextDeadline ? nextDeadline.title : "Aucune echeance"}
           detail={nextDeadline ? formatDateFr(nextDeadline.date) : "-"}
-          accent={space.accent}
-        />
-        <InfoCard
-          label="Dernier partenaire contacte"
-          title={lastPartner ? lastPartner.name : "Aucun partenaire"}
-          detail={lastPartner ? `${lastPartner.status} - ${formatRelative(lastPartner.lastContact)}` : "-"}
           accent={space.accent}
         />
       </div>

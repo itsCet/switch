@@ -1,4 +1,4 @@
-import { CalendarEvent, DraftPost, Deadline, JournalEntry, Partner, Template } from "./types";
+import { CalendarEvent, ChecklistItem, DraftPost, Deadline, JournalEntry } from "./types";
 
 export const SEED_DRAFTS: DraftPost[] = [
   {
@@ -36,25 +36,6 @@ export const SEED_DEADLINES: Deadline[] = [
   },
 ];
 
-export const SEED_PARTNERS: Partner[] = [
-  {
-    id: "p1",
-    space: "gtp",
-    name: "Swiss Basketball - com externe",
-    lastContact: "2026-07-03T10:00:00",
-    status: "en attente",
-    note: "Attente validation visuel partenaire avant publication.",
-  },
-  {
-    id: "p2",
-    space: "fourteen",
-    name: "Studio Noir & Or (photographe)",
-    lastContact: "2026-07-04T16:40:00",
-    status: "relance envoyee",
-    note: "Relance pour les fichiers HD du shooting capsule.",
-  },
-];
-
 export const SEED_CALENDAR: CalendarEvent[] = [
   { id: "c1", space: "gtp", title: "Match GTP vs Lyon", date: "2026-07-06", kind: "match", time: "18:00" },
   { id: "c2", space: "gtp", title: "Publication recap match", date: "2026-07-06", kind: "publication", time: "21:00" },
@@ -65,52 +46,15 @@ export const SEED_CALENDAR: CalendarEvent[] = [
   { id: "c7", space: "gtp", title: "Contenu partenaire - teasing", date: "2026-07-11", kind: "partenaire", time: "09:00" },
 ];
 
-export const SEED_TEMPLATES: Template[] = [
-  {
-    id: "t1",
-    space: "gtp",
-    name: "Carrousel stats match",
-    format: "Carrousel 5 slides",
-    description: "Stats cles + MVP + citation coach + prochain match + CTA billetterie.",
-    usageCount: 14,
-    lastUsed: "2026-07-01",
-  },
-  {
-    id: "t2",
-    space: "gtp",
-    name: "Coverage joueur",
-    format: "Reel 30s",
-    description: "Portrait joueur, entrainement, citation, teaser prochain match.",
-    usageCount: 9,
-    lastUsed: "2026-06-27",
-  },
-  {
-    id: "t3",
-    space: "gtp",
-    name: "Contenu partenaire",
-    format: "Post simple + story",
-    description: "Mise en avant sponsor, logo integre, mention obligatoire, lien tracké.",
-    usageCount: 6,
-    lastUsed: "2026-06-20",
-  },
-  {
-    id: "t4",
-    space: "fourteen",
-    name: "Contenu FIBA / Swiss Basketball",
-    format: "Repost + habillage",
-    description: "Recadrage brand, ajout watermark Fourteen, legende ton 'Passion Is Always Right'.",
-    usageCount: 11,
-    lastUsed: "2026-06-30",
-  },
-  {
-    id: "t5",
-    space: "fourteen",
-    name: "Backstage shooting",
-    format: "Story sequence",
-    description: "5-8 stories brutes + BTS + musique + sondage engagement.",
-    usageCount: 8,
-    lastUsed: "2026-06-22",
-  },
+export const SEED_CHECKLIST: ChecklistItem[] = [
+  { id: "cl1", space: "gtp", label: "Hashtag officiel du tournoi ajoute", checked: true },
+  { id: "cl2", space: "gtp", label: "Mention du sponsor titre visible", checked: false },
+  { id: "cl3", space: "gtp", label: "Visuel valide par la com externe si partenaire", checked: false },
+  { id: "cl4", space: "gtp", label: "Ton institutionnel / sportif respecte", checked: true },
+  { id: "cl5", space: "fourteen", label: "Mention du studio / photographe", checked: true },
+  { id: "cl6", space: "fourteen", label: "Hashtag officiel de la capsule ajoute", checked: false },
+  { id: "cl7", space: "fourteen", label: "Ton 'Passion Is Always Right' respecte", checked: true },
+  { id: "cl8", space: "fourteen", label: "Credits FIBA / Swiss Basketball si repost", checked: false },
 ];
 
 export const SEED_JOURNAL: JournalEntry[] = [
