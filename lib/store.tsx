@@ -30,6 +30,8 @@ interface SwitchStore extends SwitchState {
   setActiveSpace: (space: SpaceId) => void;
   updateJournal: (space: SpaceId, patch: Partial<Omit<JournalEntry, "space">>) => void;
   toggleChecklistItem: (id: string) => void;
+  addChecklistItem: (space: SpaceId, label: string) => void;
+  deleteChecklistItem: (id: string) => void;
   addEvent: (event: Omit<CalendarEvent, "id">) => void;
   updateEvent: (id: string, patch: Omit<CalendarEvent, "id">) => void;
   deleteEvent: (id: string) => void;
@@ -88,6 +90,16 @@ export function SwitchProvider({ children }: { children: ReactNode }) {
           checklist: s.checklist.map((item) =>
             item.id === id ? { ...item, checked: !item.checked } : item
           ),
+        })),
+      addChecklistItem: (space, label) =>
+        setState((s) => ({
+          ...s,
+          checklist: [...s.checklist, { id: crypto.randomUUID(), space, label, checked: false }],
+        })),
+      deleteChecklistItem: (id) =>
+        setState((s) => ({
+          ...s,
+          checklist: s.checklist.filter((item) => item.id !== id),
         })),
       addEvent: (event) =>
         setState((s) => ({
