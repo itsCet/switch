@@ -184,7 +184,7 @@ export function CalendarView() {
               autoFocus
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-800"
+              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-800"
               placeholder="Titre de l'evenement"
             />
           </div>
@@ -194,7 +194,7 @@ export function CalendarView() {
               type="date"
               value={form.date}
               onChange={(e) => setForm({ ...form, date: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm text-neutral-900"
             />
           </div>
           <div>
@@ -203,7 +203,7 @@ export function CalendarView() {
               type="time"
               value={form.time}
               onChange={(e) => setForm({ ...form, time: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm text-neutral-900"
             />
           </div>
           <div>
@@ -211,7 +211,7 @@ export function CalendarView() {
             <select
               value={form.kind}
               onChange={(e) => setForm({ ...form, kind: e.target.value as CalendarEvent["kind"] })}
-              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm text-neutral-900"
             >
               {KIND_OPTIONS.map((k) => (
                 <option key={k} value={k}>
@@ -225,7 +225,7 @@ export function CalendarView() {
             <select
               value={form.space}
               onChange={(e) => setForm({ ...form, space: e.target.value as SpaceId })}
-              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm text-neutral-900"
             >
               {Object.values(SPACES).map((s) => (
                 <option key={s.id} value={s.id}>

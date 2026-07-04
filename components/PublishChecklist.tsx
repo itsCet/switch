@@ -68,7 +68,7 @@ export function PublishChecklist() {
           value={newLabel}
           onChange={(e) => setNewLabel(e.target.value)}
           placeholder="Ajouter une verification"
-          className="flex-1 rounded-lg border border-black/10 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-800"
+          className="flex-1 rounded-lg border border-black/10 p-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-800"
         />
         <button
           type="submit"

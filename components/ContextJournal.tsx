@@ -47,7 +47,7 @@ export function ContextJournal() {
           setSaved(false);
         }}
         rows={2}
-        className="mt-1 w-full rounded-lg border border-black/10 bg-white/70 p-2 text-sm resize-none focus:outline-none focus:ring-2"
+        className="mt-1 w-full rounded-lg border border-black/10 bg-white/70 p-2 text-sm text-neutral-900 placeholder:text-neutral-400 resize-none focus:outline-none focus:ring-2"
         style={{ ["--tw-ring-color" as string]: space.accent }}
       />
 
@@ -58,7 +58,7 @@ export function ContextJournal() {
           setWaitingOn(e.target.value);
           setSaved(false);
         }}
-        className="mt-1 w-full rounded-lg border border-black/10 bg-white/70 p-2 text-sm focus:outline-none focus:ring-2"
+        className="mt-1 w-full rounded-lg border border-black/10 bg-white/70 p-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2"
         style={{ ["--tw-ring-color" as string]: space.accent }}
       />
 
