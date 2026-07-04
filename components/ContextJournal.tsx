@@ -1,0 +1,77 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSwitchStore } from "@/lib/store";
+import { SPACES } from "@/lib/spaces";
+import { formatRelative } from "@/lib/utils";
+
+export function ContextJournal() {
+  const { activeSpace, journal, updateJournal } = useSwitchStore();
+  const entry = journal.find((j) => j.space === activeSpace);
+  const space = SPACES[activeSpace];
+
+  const [whereImAt, setWhereImAt] = useState(entry?.whereImAt ?? "");
+  const [waitingOn, setWaitingOn] = useState(entry?.waitingOn ?? "");
+  const [saved, setSaved] = useState(true);
+
+  useEffect(() => {
+    setWhereImAt(entry?.whereImAt ?? "");
+    setWaitingOn(entry?.waitingOn ?? "");
+    setSaved(true);
+  }, [activeSpace, entry?.whereImAt, entry?.waitingOn]);
+
+  function handleSave() {
+    updateJournal(activeSpace, { whereImAt, waitingOn });
+    setSaved(true);
+  }
+
+  return (
+    <div
+      className="rounded-2xl p-5 shadow-sm border"
+      style={{ backgroundColor: space.accentSoft, borderColor: space.accent + "40" }}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: space.chip }}>
+          Journal de contexte - {space.name}
+        </p>
+        {entry && (
+          <span className="text-[11px] text-neutral-500">MAJ {formatRelative(entry.updatedAt)}</span>
+        )}
+      </div>
+
+      <label className="block mt-3 text-xs font-medium text-neutral-600">Ou j&apos;en suis</label>
+      <textarea
+        value={whereImAt}
+        onChange={(e) => {
+          setWhereImAt(e.target.value);
+          setSaved(false);
+        }}
+        rows={2}
+        className="mt-1 w-full rounded-lg border border-black/10 bg-white/70 p-2 text-sm resize-none focus:outline-none focus:ring-2"
+        style={{ ["--tw-ring-color" as string]: space.accent }}
+      />
+
+      <label className="block mt-3 text-xs font-medium text-neutral-600">En attente de retour de</label>
+      <input
+        value={waitingOn}
+        onChange={(e) => {
+          setWaitingOn(e.target.value);
+          setSaved(false);
+        }}
+        className="mt-1 w-full rounded-lg border border-black/10 bg-white/70 p-2 text-sm focus:outline-none focus:ring-2"
+        style={{ ["--tw-ring-color" as string]: space.accent }}
+      />
+
+      <div className="mt-3 flex justify-end">
+        <button
+          onClick={handleSave}
+          disabled={saved}
+          className="text-xs font-semibold px-3 py-1.5 rounded-full text-white disabled:opacity-40"
+          style={{ backgroundColor: space.chip }}
+        >
+          {saved ? "A jour" : "Enregistrer"}
+        </button>
+      </div>
+    </div>
+  );
+}
