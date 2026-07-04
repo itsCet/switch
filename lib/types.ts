@@ -10,6 +10,7 @@ export interface SpaceTheme {
   gradient: string;
   accent: string;
   accentSoft: string;
+  softIsDark: boolean;
   ring: string;
   chip: string;
   fontClass: string;

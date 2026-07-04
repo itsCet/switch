@@ -25,21 +25,27 @@ export function ContextJournal() {
     setSaved(true);
   }
 
+  const labelClass = space.softIsDark ? "text-white/70" : "text-neutral-600";
+  const metaClass = space.softIsDark ? "text-white/50" : "text-neutral-500";
+
   return (
     <div
       className="rounded-2xl p-5 shadow-sm border"
       style={{ backgroundColor: space.accentSoft, borderColor: space.accent + "40" }}
     >
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: space.chip }}>
+        <p
+          className="text-xs uppercase tracking-wide font-semibold"
+          style={{ color: space.softIsDark ? "#ffffff" : space.chip }}
+        >
           Journal de contexte - {space.name}
         </p>
         {entry && (
-          <span className="text-[11px] text-neutral-500">MAJ {formatRelative(entry.updatedAt)}</span>
+          <span className={`text-[11px] ${metaClass}`}>MAJ {formatRelative(entry.updatedAt)}</span>
         )}
       </div>
 
-      <label className="block mt-3 text-xs font-medium text-neutral-600">Ou j&apos;en suis</label>
+      <label className={`block mt-3 text-xs font-medium ${labelClass}`}>Ou j&apos;en suis</label>
       <textarea
         value={whereImAt}
         onChange={(e) => {
@@ -51,7 +57,7 @@ export function ContextJournal() {
         style={{ ["--tw-ring-color" as string]: space.accent }}
       />
 
-      <label className="block mt-3 text-xs font-medium text-neutral-600">En attente de retour de</label>
+      <label className={`block mt-3 text-xs font-medium ${labelClass}`}>En attente de retour de</label>
       <input
         value={waitingOn}
         onChange={(e) => {

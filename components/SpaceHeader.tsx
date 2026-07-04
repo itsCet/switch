@@ -33,13 +33,11 @@ export function SpaceHeader() {
           label="Dernier post en brouillon"
           title={lastDraft ? lastDraft.title : "Aucun brouillon"}
           detail={lastDraft ? `${lastDraft.status} - MAJ ${formatRelative(lastDraft.updatedAt)}` : "-"}
-          accent={space.accent}
         />
         <InfoCard
           label="Prochaine echeance"
           title={nextDeadline ? nextDeadline.title : "Aucune echeance"}
           detail={nextDeadline ? formatDateFr(nextDeadline.date) : "-"}
-          accent={space.accent}
         />
       </div>
     </div>
@@ -50,20 +48,16 @@ function InfoCard({
   label,
   title,
   detail,
-  accent,
 }: {
   label: string;
   title: string;
   detail: string;
-  accent: string;
 }) {
   return (
     <div className="rounded-2xl bg-white/10 border border-white/10 p-4 backdrop-blur-sm">
       <p className="text-[11px] uppercase tracking-wide text-white/55">{label}</p>
       <p className="mt-1.5 font-semibold text-sm leading-snug">{title}</p>
-      <p className="mt-1 text-xs" style={{ color: accent }}>
-        {detail}
-      </p>
+      <p className="mt-1 text-xs text-white/80">{detail}</p>
     </div>
   );
 }
