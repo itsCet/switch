@@ -1,40 +1,4 @@
-import { CalendarEvent, ChecklistItem, DraftPost, Deadline, JournalEntry } from "./types";
-
-export const SEED_DRAFTS: DraftPost[] = [
-  {
-    id: "d1",
-    space: "gtp",
-    title: "Carrousel stats - demi-finale J14",
-    status: "a-valider",
-    updatedAt: "2026-07-04T18:20:00",
-    excerpt: "3 chiffres cles du match, visuel aux couleurs du tournoi, CTA billetterie.",
-  },
-  {
-    id: "d2",
-    space: "fourteen",
-    title: "Coverage backstage - shooting capsule ete",
-    status: "brouillon",
-    updatedAt: "2026-07-04T21:05:00",
-    excerpt: "Selects du shooting, teaser video 15s, legende sur le concept 'Passion Is Always Right'.",
-  },
-];
-
-export const SEED_DEADLINES: Deadline[] = [
-  {
-    id: "dl1",
-    space: "gtp",
-    title: "Publication recap match vs Lyon",
-    date: "2026-07-06",
-    kind: "publication",
-  },
-  {
-    id: "dl2",
-    space: "fourteen",
-    title: "Livraison shooting capsule ete",
-    date: "2026-07-09",
-    kind: "shooting",
-  },
-];
+import { CalendarEvent, ChecklistItem, JournalEntry } from "./types";
 
 export const SEED_CALENDAR: CalendarEvent[] = [
   { id: "c1", space: "gtp", title: "Match GTP vs Lyon", date: "2026-07-06", kind: "match", time: "18:00" },

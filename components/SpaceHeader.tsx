@@ -2,20 +2,23 @@
 
 import { useSwitchStore } from "@/lib/store";
 import { SPACES } from "@/lib/spaces";
-import { formatDateFr, formatRelative } from "@/lib/utils";
+import { KIND_LABEL } from "@/lib/calendar";
+import { formatDateFr, toISODate } from "@/lib/utils";
 import { SpaceSwitcher } from "./SpaceSwitcher";
 
 export function SpaceHeader() {
-  const { activeSpace, drafts, deadlines } = useSwitchStore();
+  const { activeSpace, calendar } = useSwitchStore();
   const space = SPACES[activeSpace];
+  const todayISO = toISODate(new Date());
 
-  const lastDraft = drafts
-    .filter((d) => d.space === activeSpace)
-    .sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))[0];
+  const spaceEvents = calendar
+    .filter((ev) => ev.space === activeSpace)
+    .sort((a, b) => (a.date + (a.time ?? "")).localeCompare(b.date + (b.time ?? "")));
 
-  const nextDeadline = deadlines
-    .filter((d) => d.space === activeSpace)
-    .sort((a, b) => +new Date(a.date) - +new Date(b.date))[0];
+  const todaysEvents = spaceEvents.filter((ev) => ev.date === todayISO);
+  const urgent = todaysEvents[0] ?? spaceEvents.find((ev) => ev.date > todayISO);
+
+  const label = todaysEvents.length ? "A faire aujourd'hui" : "Prochain evenement";
 
   return (
     <div className={`bg-gradient-to-br ${space.gradient} text-white rounded-3xl p-6 sm:p-8 shadow-xl`}>
@@ -28,36 +31,20 @@ export function SpaceHeader() {
         <SpaceSwitcher />
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        <InfoCard
-          label="Dernier post en brouillon"
-          title={lastDraft ? lastDraft.title : "Aucun brouillon"}
-          detail={lastDraft ? `${lastDraft.status} - MAJ ${formatRelative(lastDraft.updatedAt)}` : "-"}
-        />
-        <InfoCard
-          label="Prochaine echeance"
-          title={nextDeadline ? nextDeadline.title : "Aucune echeance"}
-          detail={nextDeadline ? formatDateFr(nextDeadline.date) : "-"}
-        />
+      <div className="mt-6 rounded-2xl bg-white/10 border border-white/10 p-4 backdrop-blur-sm">
+        <p className="text-[11px] uppercase tracking-wide text-white/55">{label}</p>
+        {urgent ? (
+          <>
+            <p className="mt-1.5 font-semibold text-sm leading-snug">{urgent.title}</p>
+            <p className="mt-1 text-xs text-white/80">
+              {formatDateFr(urgent.date)}
+              {urgent.time ? ` - ${urgent.time}` : ""} - {KIND_LABEL[urgent.kind]}
+            </p>
+          </>
+        ) : (
+          <p className="mt-1.5 font-semibold text-sm leading-snug">Rien de prevu</p>
+        )}
       </div>
-    </div>
-  );
-}
-
-function InfoCard({
-  label,
-  title,
-  detail,
-}: {
-  label: string;
-  title: string;
-  detail: string;
-}) {
-  return (
-    <div className="rounded-2xl bg-white/10 border border-white/10 p-4 backdrop-blur-sm">
-      <p className="text-[11px] uppercase tracking-wide text-white/55">{label}</p>
-      <p className="mt-1.5 font-semibold text-sm leading-snug">{title}</p>
-      <p className="mt-1 text-xs text-white/80">{detail}</p>
     </div>
   );
 }

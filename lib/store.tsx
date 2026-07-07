@@ -3,27 +3,12 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
-import {
-  CalendarEvent,
-  ChecklistItem,
-  DraftPost,
-  Deadline,
-  JournalEntry,
-  SpaceId,
-} from "./types";
-import {
-  SEED_CALENDAR,
-  SEED_CHECKLIST,
-  SEED_DEADLINES,
-  SEED_DRAFTS,
-  SEED_JOURNAL,
-} from "./seed";
+import { CalendarEvent, ChecklistItem, JournalEntry, SpaceId } from "./types";
+import { SEED_CALENDAR, SEED_CHECKLIST, SEED_JOURNAL } from "./seed";
 import { AuthScreen } from "@/components/AuthScreen";
 
 interface SwitchState {
   activeSpace: SpaceId;
-  drafts: DraftPost[];
-  deadlines: Deadline[];
   calendar: CalendarEvent[];
   checklist: ChecklistItem[];
   journal: JournalEntry[];
@@ -44,8 +29,6 @@ interface SwitchStore extends SwitchState {
 
 const DEFAULT_STATE: SwitchState = {
   activeSpace: "gtp",
-  drafts: SEED_DRAFTS,
-  deadlines: SEED_DEADLINES,
   calendar: SEED_CALENDAR,
   checklist: SEED_CHECKLIST,
   journal: SEED_JOURNAL,

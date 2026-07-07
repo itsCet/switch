@@ -16,23 +16,6 @@ export interface SpaceTheme {
   fontClass: string;
 }
 
-export interface DraftPost {
-  id: string;
-  space: SpaceId;
-  title: string;
-  status: "brouillon" | "a-valider" | "pret";
-  updatedAt: string;
-  excerpt: string;
-}
-
-export interface Deadline {
-  id: string;
-  space: SpaceId;
-  title: string;
-  date: string;
-  kind: "match" | "shooting" | "partenaire" | "publication" | "reunion";
-}
-
 export interface CalendarEvent {
   id: string;
   space: SpaceId;

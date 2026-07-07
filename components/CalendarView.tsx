@@ -4,19 +4,10 @@ import { FormEvent, useMemo, useState } from "react";
 import { useSwitchStore } from "@/lib/store";
 import { SPACES } from "@/lib/spaces";
 import { formatDateFr, getMonthMatrix, MONTH_LABEL_FR, toISODate, WEEKDAY_LABEL_FR } from "@/lib/utils";
+import { KIND_LABEL, KIND_OPTIONS } from "@/lib/calendar";
 import { CalendarEvent, SpaceId } from "@/lib/types";
 
 type Mode = "fusion" | "filtre";
-
-const KIND_LABEL: Record<CalendarEvent["kind"], string> = {
-  match: "Match",
-  shooting: "Shooting",
-  partenaire: "Partenaire",
-  publication: "Publication",
-  reunion: "Reunion",
-};
-
-const KIND_OPTIONS = Object.keys(KIND_LABEL) as CalendarEvent["kind"][];
 
 interface FormState {
   id: string | null;
