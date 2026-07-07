@@ -1,6 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "./supabaseClient";
 import {
   CalendarEvent,
   ChecklistItem,
@@ -16,6 +18,7 @@ import {
   SEED_DRAFTS,
   SEED_JOURNAL,
 } from "./seed";
+import { AuthScreen } from "@/components/AuthScreen";
 
 interface SwitchState {
   activeSpace: SpaceId;
@@ -27,6 +30,8 @@ interface SwitchState {
 }
 
 interface SwitchStore extends SwitchState {
+  session: Session;
+  signOut: () => void;
   setActiveSpace: (space: SpaceId) => void;
   updateJournal: (space: SpaceId, patch: Partial<Omit<JournalEntry, "space">>) => void;
   toggleChecklistItem: (id: string) => void;
@@ -36,8 +41,6 @@ interface SwitchStore extends SwitchState {
   updateEvent: (id: string, patch: Omit<CalendarEvent, "id">) => void;
   deleteEvent: (id: string) => void;
 }
-
-const STORAGE_KEY = "switch-app-state-v2";
 
 const DEFAULT_STATE: SwitchState = {
   activeSpace: "gtp",
@@ -51,74 +54,130 @@ const DEFAULT_STATE: SwitchState = {
 const SwitchContext = createContext<SwitchStore | null>(null);
 
 export function SwitchProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<SwitchState>(DEFAULT_STATE);
-  const [hydrated, setHydrated] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [state, setState] = useState<SwitchState | null>(null);
+  const skipNextPersist = useRef(false);
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        setState({ ...DEFAULT_STATE, ...JSON.parse(raw) });
-      }
-    } catch {
-      // ignore corrupted local storage
-    }
-    setHydrated(true);
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      if (!newSession) setState(null);
+    });
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state, hydrated]);
+    if (!session) return;
+    let cancelled = false;
 
-  const value = useMemo<SwitchStore>(
-    () => ({
+    supabase
+      .from("app_state")
+      .select("data")
+      .eq("user_id", session.user.id)
+      .maybeSingle()
+      .then(async ({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          console.error("Failed to load app state", error);
+          return;
+        }
+        if (data) {
+          skipNextPersist.current = true;
+          setState(data.data as SwitchState);
+        } else {
+          skipNextPersist.current = true;
+          setState(DEFAULT_STATE);
+          await supabase.from("app_state").insert({ user_id: session.user.id, data: DEFAULT_STATE });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+
+  useEffect(() => {
+    if (!session || !state) return;
+    if (skipNextPersist.current) {
+      skipNextPersist.current = false;
+      return;
+    }
+    supabase
+      .from("app_state")
+      .upsert({ user_id: session.user.id, data: state, updated_at: new Date().toISOString() })
+      .then(({ error }) => {
+        if (error) console.error("Failed to save app state", error);
+      });
+  }, [state, session]);
+
+  const value = useMemo<SwitchStore | null>(() => {
+    if (!session || !state) return null;
+    return {
       ...state,
-      setActiveSpace: (space) => setState((s) => ({ ...s, activeSpace: space })),
+      session,
+      signOut: () => supabase.auth.signOut(),
+      setActiveSpace: (space) => setState((s) => (s ? { ...s, activeSpace: space } : s)),
       updateJournal: (space, patch) =>
-        setState((s) => ({
-          ...s,
-          journal: s.journal.map((entry) =>
-            entry.space === space
-              ? { ...entry, ...patch, updatedAt: new Date().toISOString() }
-              : entry
-          ),
-        })),
+        setState((s) =>
+          s
+            ? {
+                ...s,
+                journal: s.journal.map((entry) =>
+                  entry.space === space
+                    ? { ...entry, ...patch, updatedAt: new Date().toISOString() }
+                    : entry
+                ),
+              }
+            : s
+        ),
       toggleChecklistItem: (id) =>
-        setState((s) => ({
-          ...s,
-          checklist: s.checklist.map((item) =>
-            item.id === id ? { ...item, checked: !item.checked } : item
-          ),
-        })),
+        setState((s) =>
+          s
+            ? {
+                ...s,
+                checklist: s.checklist.map((item) =>
+                  item.id === id ? { ...item, checked: !item.checked } : item
+                ),
+              }
+            : s
+        ),
       addChecklistItem: (space, label) =>
-        setState((s) => ({
-          ...s,
-          checklist: [...s.checklist, { id: crypto.randomUUID(), space, label, checked: false }],
-        })),
+        setState((s) =>
+          s
+            ? { ...s, checklist: [...s.checklist, { id: crypto.randomUUID(), space, label, checked: false }] }
+            : s
+        ),
       deleteChecklistItem: (id) =>
-        setState((s) => ({
-          ...s,
-          checklist: s.checklist.filter((item) => item.id !== id),
-        })),
+        setState((s) => (s ? { ...s, checklist: s.checklist.filter((item) => item.id !== id) } : s)),
       addEvent: (event) =>
-        setState((s) => ({
-          ...s,
-          calendar: [...s.calendar, { ...event, id: crypto.randomUUID() }],
-        })),
+        setState((s) => (s ? { ...s, calendar: [...s.calendar, { ...event, id: crypto.randomUUID() }] } : s)),
       updateEvent: (id, patch) =>
-        setState((s) => ({
-          ...s,
-          calendar: s.calendar.map((ev) => (ev.id === id ? { ...ev, ...patch, id } : ev)),
-        })),
+        setState((s) =>
+          s
+            ? { ...s, calendar: s.calendar.map((ev) => (ev.id === id ? { ...ev, ...patch, id } : ev)) }
+            : s
+        ),
       deleteEvent: (id) =>
-        setState((s) => ({
-          ...s,
-          calendar: s.calendar.filter((ev) => ev.id !== id),
-        })),
-    }),
-    [state]
-  );
+        setState((s) => (s ? { ...s, calendar: s.calendar.filter((ev) => ev.id !== id) } : s)),
+    };
+  }, [state, session]);
+
+  if (authLoading) {
+    return <div className="min-h-screen flex items-center justify-center text-neutral-400 text-sm">Chargement...</div>;
+  }
+
+  if (!session) {
+    return <AuthScreen />;
+  }
+
+  if (!value) {
+    return <div className="min-h-screen flex items-center justify-center text-neutral-400 text-sm">Chargement...</div>;
+  }
 
   return <SwitchContext.Provider value={value}>{children}</SwitchContext.Provider>;
 }
