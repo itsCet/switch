@@ -3,19 +3,29 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
-import { CalendarEvent, ChecklistItem, JournalEntry, SpaceId } from "./types";
-import { SEED_CALENDAR, SEED_CHECKLIST, SEED_JOURNAL } from "./seed";
+import { deriveThemeFromAccent } from "./color";
+import { CalendarEvent, ChecklistItem, JournalEntry, SpaceId, SpaceTheme } from "./types";
+import { SEED_CALENDAR, SEED_CHECKLIST, SEED_JOURNAL, SEED_SPACES } from "./seed";
 import { AuthScreen } from "@/components/AuthScreen";
 
 interface SwitchState {
   activeSpace: SpaceId;
+  spaces: SpaceTheme[];
   calendar: CalendarEvent[];
   checklist: ChecklistItem[];
   journal: JournalEntry[];
 }
 
+interface SpaceInput {
+  name: string;
+  tagline: string;
+  tone: string;
+  accent: string;
+}
+
 interface SwitchStore extends SwitchState {
   session: Session;
+  space: SpaceTheme;
   signOut: () => void;
   setActiveSpace: (space: SpaceId) => void;
   updateJournal: (space: SpaceId, patch: Partial<Omit<JournalEntry, "space">>) => void;
@@ -25,10 +35,14 @@ interface SwitchStore extends SwitchState {
   addEvent: (event: Omit<CalendarEvent, "id">) => void;
   updateEvent: (id: string, patch: Omit<CalendarEvent, "id">) => void;
   deleteEvent: (id: string) => void;
+  addSpace: (input: SpaceInput) => void;
+  updateSpace: (id: string, input: SpaceInput) => void;
+  deleteSpace: (id: string) => void;
 }
 
 const DEFAULT_STATE: SwitchState = {
   activeSpace: "gtp",
+  spaces: SEED_SPACES,
   calendar: SEED_CALENDAR,
   checklist: SEED_CHECKLIST,
   journal: SEED_JOURNAL,
@@ -71,7 +85,7 @@ export function SwitchProvider({ children }: { children: ReactNode }) {
         }
         if (data) {
           skipNextPersist.current = true;
-          setState(data.data as SwitchState);
+          setState({ ...DEFAULT_STATE, ...(data.data as Partial<SwitchState>) });
         } else {
           skipNextPersist.current = true;
           setState(DEFAULT_STATE);
@@ -100,24 +114,30 @@ export function SwitchProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<SwitchStore | null>(() => {
     if (!session || !state) return null;
+    const activeTheme = state.spaces.find((sp) => sp.id === state.activeSpace) ?? state.spaces[0];
     return {
       ...state,
+      space: activeTheme,
       session,
       signOut: () => supabase.auth.signOut(),
       setActiveSpace: (space) => setState((s) => (s ? { ...s, activeSpace: space } : s)),
       updateJournal: (space, patch) =>
-        setState((s) =>
-          s
-            ? {
-                ...s,
-                journal: s.journal.map((entry) =>
-                  entry.space === space
-                    ? { ...entry, ...patch, updatedAt: new Date().toISOString() }
-                    : entry
-                ),
-              }
-            : s
-        ),
+        setState((s) => {
+          if (!s) return s;
+          const exists = s.journal.some((entry) => entry.space === space);
+          const updatedAt = new Date().toISOString();
+          return {
+            ...s,
+            journal: exists
+              ? s.journal.map((entry) =>
+                  entry.space === space ? { ...entry, ...patch, updatedAt } : entry
+                )
+              : [
+                  ...s.journal,
+                  { space, whereImAt: "", waitingOn: "", ...patch, updatedAt },
+                ],
+          };
+        }),
       toggleChecklistItem: (id) =>
         setState((s) =>
           s
@@ -147,6 +167,33 @@ export function SwitchProvider({ children }: { children: ReactNode }) {
         ),
       deleteEvent: (id) =>
         setState((s) => (s ? { ...s, calendar: s.calendar.filter((ev) => ev.id !== id) } : s)),
+      addSpace: (input) =>
+        setState((s) => {
+          if (!s) return s;
+          const derived = deriveThemeFromAccent(input.accent);
+          const newSpace: SpaceTheme = { id: crypto.randomUUID(), ...input, ...derived };
+          return { ...s, spaces: [...s.spaces, newSpace] };
+        }),
+      updateSpace: (id, input) =>
+        setState((s) => {
+          if (!s) return s;
+          return {
+            ...s,
+            spaces: s.spaces.map((sp) => {
+              if (sp.id !== id) return sp;
+              const accentChanged = input.accent !== sp.accent;
+              const derived = accentChanged ? deriveThemeFromAccent(input.accent) : {};
+              return { ...sp, ...input, ...derived };
+            }),
+          };
+        }),
+      deleteSpace: (id) =>
+        setState((s) => {
+          if (!s || s.spaces.length <= 1) return s;
+          const spaces = s.spaces.filter((sp) => sp.id !== id);
+          const activeSpace = s.activeSpace === id ? spaces[0].id : s.activeSpace;
+          return { ...s, spaces, activeSpace };
+        }),
     };
   }, [state, session]);
 

@@ -1,7 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { useSwitchStore } from "@/lib/store";
-import { DAY_LABEL_FR, DAY_ORDER, SPACES, SPLIT_SCHEDULE } from "@/lib/spaces";
+import { DAY_LABEL_FR, DAY_ORDER, SPLIT_SCHEDULE } from "@/lib/spaces";
 import { SpaceId } from "@/lib/types";
 
 function getDayIndex(date: Date) {
@@ -10,7 +11,9 @@ function getDayIndex(date: Date) {
 }
 
 export function SplitScheduleBanner() {
-  const { activeSpace } = useSwitchStore();
+  const { activeSpace, spaces } = useSwitchStore();
+  const spaceById = useMemo(() => new Map(spaces.map((sp) => [sp.id, sp])), [spaces]);
+
   const now = new Date();
   const todayIdx = getDayIndex(now);
   const tomorrowIdx = (todayIdx + 1) % 7;
@@ -24,6 +27,7 @@ export function SplitScheduleBanner() {
     tomorrow.spaces.some((s) => s !== activeSpace);
 
   const newSpaceTomorrow = tomorrow.spaces.find((s) => s !== activeSpace) as SpaceId | undefined;
+  const newSpaceTheme = newSpaceTomorrow ? spaceById.get(newSpaceTomorrow) : undefined;
 
   return (
     <div className="rounded-2xl border border-black/5 bg-white p-4 sm:p-5 shadow-sm">
@@ -38,6 +42,7 @@ export function SplitScheduleBanner() {
           {DAY_ORDER.map((day, idx) => {
             const entry = SPLIT_SCHEDULE[idx];
             const isToday = idx === todayIdx;
+            const colors = entry.spaces.map((id) => spaceById.get(id)?.accent).filter(Boolean);
             return (
               <div
                 key={day}
@@ -47,12 +52,10 @@ export function SplitScheduleBanner() {
                 }`}
                 style={{
                   background:
-                    entry.spaces.length === 2
-                      ? "linear-gradient(90deg, #0b2545 50%, #ff2e63 50%)"
-                      : entry.spaces[0]
-                        ? SPACES[entry.spaces[0]].accent
-                        : "#e5e5e5",
-                  color: entry.spaces.length ? "white" : "#999",
+                    colors.length === 2
+                      ? `linear-gradient(90deg, ${colors[0]} 50%, ${colors[1]} 50%)`
+                      : (colors[0] ?? "#e5e5e5"),
+                  color: colors.length ? "white" : "#999",
                 }}
               >
                 {DAY_LABEL_FR[day].slice(0, 2)}
@@ -62,14 +65,14 @@ export function SplitScheduleBanner() {
         </div>
       </div>
 
-      {switchesTomorrow && newSpaceTomorrow && (
+      {switchesTomorrow && newSpaceTheme && (
         <div
           className="mt-3 rounded-xl px-4 py-3 text-sm text-white flex items-center gap-2"
-          style={{ backgroundColor: SPACES[newSpaceTomorrow].chip }}
+          style={{ backgroundColor: newSpaceTheme.chip }}
         >
           <span>🔔</span>
           <span>
-            Tu passes chez <strong>{SPACES[newSpaceTomorrow].name}</strong> demain ({DAY_LABEL_FR[tomorrow.day]}) -
+            Tu passes chez <strong>{newSpaceTheme.name}</strong> demain ({DAY_LABEL_FR[tomorrow.day]}) -
             pense a consulter le journal de contexte pour reprendre le fil.
           </span>
         </div>

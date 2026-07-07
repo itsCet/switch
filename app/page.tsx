@@ -3,6 +3,7 @@ import { SplitScheduleBanner } from "@/components/SplitScheduleBanner";
 import { ContextJournal } from "@/components/ContextJournal";
 import { CalendarView } from "@/components/CalendarView";
 import { PublishChecklist } from "@/components/PublishChecklist";
+import { SpaceManager } from "@/components/SpaceManager";
 import { AccountBar } from "@/components/AccountBar";
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
         <ContextJournal />
         <CalendarView />
         <PublishChecklist />
+        <SpaceManager />
       </div>
     </main>
   );

@@ -2,12 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import { useSwitchStore } from "@/lib/store";
-import { SPACES } from "@/lib/spaces";
 
 export function PublishChecklist() {
-  const { activeSpace, checklist, toggleChecklistItem, addChecklistItem, deleteChecklistItem } =
+  const { activeSpace, checklist, toggleChecklistItem, addChecklistItem, deleteChecklistItem, space } =
     useSwitchStore();
-  const space = SPACES[activeSpace];
   const items = checklist.filter((item) => item.space === activeSpace);
   const doneCount = items.filter((item) => item.checked).length;
   const [newLabel, setNewLabel] = useState("");

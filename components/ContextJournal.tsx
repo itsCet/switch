@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useSwitchStore } from "@/lib/store";
-import { SPACES } from "@/lib/spaces";
 import { formatRelative } from "@/lib/utils";
 
 export function ContextJournal() {
-  const { activeSpace, journal, updateJournal } = useSwitchStore();
+  const { activeSpace, journal, updateJournal, space } = useSwitchStore();
   const entry = journal.find((j) => j.space === activeSpace);
-  const space = SPACES[activeSpace];
 
   const [whereImAt, setWhereImAt] = useState(entry?.whereImAt ?? "");
   const [waitingOn, setWaitingOn] = useState(entry?.waitingOn ?? "");

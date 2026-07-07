@@ -1,14 +1,12 @@
 "use client";
 
 import { useSwitchStore } from "@/lib/store";
-import { SPACES } from "@/lib/spaces";
 import { KIND_LABEL } from "@/lib/calendar";
 import { formatDateFr, toISODate } from "@/lib/utils";
 import { SpaceSwitcher } from "./SpaceSwitcher";
 
 export function SpaceHeader() {
-  const { activeSpace, calendar } = useSwitchStore();
-  const space = SPACES[activeSpace];
+  const { activeSpace, calendar, space } = useSwitchStore();
   const todayISO = toISODate(new Date());
 
   const spaceEvents = calendar
@@ -21,11 +19,14 @@ export function SpaceHeader() {
   const label = todaysEvents.length ? "A faire aujourd'hui" : "Prochain evenement";
 
   return (
-    <div className={`bg-gradient-to-br ${space.gradient} text-white rounded-3xl p-6 sm:p-8 shadow-xl`}>
+    <div
+      className="text-white rounded-3xl p-6 sm:p-8 shadow-xl"
+      style={{ background: `linear-gradient(to bottom right, ${space.gradientFrom}, ${space.gradientTo})` }}
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-widest text-white/60">Espace actif</p>
-          <h1 className={`text-3xl sm:text-4xl ${space.fontClass}`}>{space.name}</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold">{space.name}</h1>
           <p className="text-white/70 text-sm mt-1">{space.tagline} - {space.tone}</p>
         </div>
         <SpaceSwitcher />

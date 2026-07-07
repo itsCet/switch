@@ -1,33 +1,4 @@
-import { SpaceTheme, SplitScheduleEntry } from "./types";
-
-export const SPACES: Record<string, SpaceTheme> = {
-  gtp: {
-    id: "gtp",
-    name: "GTP",
-    tagline: "Grand Tournoi Pro",
-    tone: "Institutionnel & sportif",
-    gradient: "from-[#0b2545] to-[#134074]",
-    accent: "#f2b705",
-    accentSoft: "#fdf0cc",
-    softIsDark: false,
-    ring: "#0b2545",
-    chip: "#134074",
-    fontClass: "font-[600]",
-  },
-  fourteen: {
-    id: "fourteen",
-    name: "Fourteen",
-    tagline: "Passion Is Always Right",
-    tone: "Mode & attitude",
-    gradient: "from-[#1a1a1a] to-[#3d0e2b]",
-    accent: "#ff2e63",
-    accentSoft: "#2a0a18",
-    softIsDark: true,
-    ring: "#ff2e63",
-    chip: "#3d0e2b",
-    fontClass: "font-[700] tracking-tight",
-  },
-};
+import { SplitScheduleEntry } from "./types";
 
 export const SPLIT_SCHEDULE: SplitScheduleEntry[] = [
   { day: "monday", spaces: ["gtp"], label: "Journee GTP" },

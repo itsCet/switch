@@ -1,4 +1,31 @@
-import { CalendarEvent, ChecklistItem, JournalEntry } from "./types";
+import { CalendarEvent, ChecklistItem, JournalEntry, SpaceTheme } from "./types";
+
+export const SEED_SPACES: SpaceTheme[] = [
+  {
+    id: "gtp",
+    name: "GTP",
+    tagline: "Geneva Trophy Promotion",
+    tone: "Institutionnel & sportif",
+    gradientFrom: "#0b2545",
+    gradientTo: "#134074",
+    accent: "#f2b705",
+    accentSoft: "#fdf0cc",
+    softIsDark: false,
+    chip: "#134074",
+  },
+  {
+    id: "fourteen",
+    name: "Fourteen",
+    tagline: "Passion Is Always Right",
+    tone: "Mode & attitude",
+    gradientFrom: "#1a1a1a",
+    gradientTo: "#3d0e2b",
+    accent: "#ff2e63",
+    accentSoft: "#2a0a18",
+    softIsDark: true,
+    chip: "#3d0e2b",
+  },
+];
 
 export const SEED_CALENDAR: CalendarEvent[] = [
   { id: "c1", space: "gtp", title: "Match GTP vs Lyon", date: "2026-07-06", kind: "match", time: "18:00" },

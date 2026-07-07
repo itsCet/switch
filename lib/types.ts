@@ -1,4 +1,4 @@
-export type SpaceId = "gtp" | "fourteen";
+export type SpaceId = string;
 
 export type SplitDay = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
@@ -7,13 +7,12 @@ export interface SpaceTheme {
   name: string;
   tagline: string;
   tone: string;
-  gradient: string;
+  gradientFrom: string;
+  gradientTo: string;
   accent: string;
   accentSoft: string;
   softIsDark: boolean;
-  ring: string;
   chip: string;
-  fontClass: string;
 }
 
 export interface CalendarEvent {

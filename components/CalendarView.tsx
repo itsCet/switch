@@ -2,7 +2,6 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useSwitchStore } from "@/lib/store";
-import { SPACES } from "@/lib/spaces";
 import { formatDateFr, getMonthMatrix, MONTH_LABEL_FR, toISODate, WEEKDAY_LABEL_FR } from "@/lib/utils";
 import { KIND_LABEL, KIND_OPTIONS } from "@/lib/calendar";
 import { CalendarEvent, SpaceId } from "@/lib/types";
@@ -19,10 +18,12 @@ interface FormState {
 }
 
 export function CalendarView() {
-  const { activeSpace, calendar, addEvent, updateEvent, deleteEvent } = useSwitchStore();
+  const { activeSpace, calendar, spaces, space, addEvent, updateEvent, deleteEvent } = useSwitchStore();
   const [mode, setMode] = useState<Mode>("fusion");
   const [viewDate, setViewDate] = useState(() => new Date());
   const [form, setForm] = useState<FormState | null>(null);
+
+  const spaceById = useMemo(() => new Map(spaces.map((sp) => [sp.id, sp])), [spaces]);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -93,7 +94,7 @@ export function CalendarView() {
                 mode === "filtre" ? "bg-neutral-900 text-white" : "text-neutral-600"
               }`}
             >
-              {SPACES[activeSpace].name} uniquement
+              {space.name} uniquement
             </button>
           </div>
           <button
@@ -155,7 +156,7 @@ export function CalendarView() {
                   <span
                     key={ev.id}
                     className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: SPACES[ev.space].accent }}
+                    style={{ backgroundColor: spaceById.get(ev.space)?.accent }}
                   />
                 ))}
               </div>
@@ -218,7 +219,7 @@ export function CalendarView() {
               onChange={(e) => setForm({ ...form, space: e.target.value as SpaceId })}
               className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm text-neutral-900"
             >
-              {Object.values(SPACES).map((s) => (
+              {spaces.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>
@@ -275,7 +276,7 @@ export function CalendarView() {
                 <p className="text-xs font-semibold text-neutral-500 uppercase">{formatDateFr(date)}</p>
                 {isConflict && (
                   <span className="text-[11px] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                    ⚠ conflit potentiel entre les deux espaces
+                    ⚠ conflit potentiel entre espaces
                   </span>
                 )}
               </div>
@@ -285,13 +286,13 @@ export function CalendarView() {
                     key={ev.id}
                     onClick={() => openEditForm(ev)}
                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white text-left hover:opacity-90"
-                    style={{ backgroundColor: SPACES[ev.space].chip }}
+                    style={{ backgroundColor: spaceById.get(ev.space)?.chip }}
                   >
                     <span className="font-mono text-xs opacity-70">{ev.time ?? "--:--"}</span>
                     <span className="flex-1">{ev.title}</span>
                     <span
                       className="text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5"
-                      style={{ backgroundColor: SPACES[ev.space].accent, color: "#111" }}
+                      style={{ backgroundColor: spaceById.get(ev.space)?.accent, color: "#111" }}
                     >
                       {KIND_LABEL[ev.kind]}
                     </span>
