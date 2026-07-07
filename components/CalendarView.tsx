@@ -2,7 +2,14 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useSwitchStore } from "@/lib/store";
-import { formatDateFr, getMonthMatrix, MONTH_LABEL_FR, toISODate, WEEKDAY_LABEL_FR } from "@/lib/utils";
+import {
+  eachDateInRange,
+  formatDateFr,
+  getMonthMatrix,
+  MONTH_LABEL_FR,
+  toISODate,
+  WEEKDAY_LABEL_FR,
+} from "@/lib/utils";
 import { KIND_LABEL, KIND_OPTIONS } from "@/lib/calendar";
 import { CalendarEvent, SpaceId } from "@/lib/types";
 
@@ -12,6 +19,7 @@ interface FormState {
   id: string | null;
   title: string;
   date: string;
+  endDate: string;
   time: string;
   kind: CalendarEvent["kind"];
   space: SpaceId;
@@ -32,7 +40,20 @@ export function CalendarView() {
 
   const visibleEvents = mode === "filtre" ? calendar.filter((e) => e.space === activeSpace) : calendar;
 
-  const eventsByDate = useMemo(() => {
+  const gridEventsByDate = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>();
+    for (const ev of visibleEvents) {
+      const dates = ev.endDate && ev.endDate > ev.date ? eachDateInRange(ev.date, ev.endDate) : [ev.date];
+      for (const d of dates) {
+        const list = map.get(d) ?? [];
+        list.push(ev);
+        map.set(d, list);
+      }
+    }
+    return map;
+  }, [visibleEvents]);
+
+  const agendaGroups = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const ev of visibleEvents) {
       const list = map.get(ev.date) ?? [];
@@ -44,16 +65,24 @@ export function CalendarView() {
   }, [visibleEvents]);
 
   const grouped = useMemo(
-    () => [...eventsByDate.entries()].sort((a, b) => a[0].localeCompare(b[0])),
-    [eventsByDate]
+    () => [...agendaGroups.entries()].sort((a, b) => a[0].localeCompare(b[0])),
+    [agendaGroups]
   );
 
   function openCreateForm(date: string) {
-    setForm({ id: null, title: "", date, time: "", kind: "publication", space: activeSpace });
+    setForm({ id: null, title: "", date, endDate: "", time: "", kind: "publication", space: activeSpace });
   }
 
   function openEditForm(ev: CalendarEvent) {
-    setForm({ id: ev.id, title: ev.title, date: ev.date, time: ev.time ?? "", kind: ev.kind, space: ev.space });
+    setForm({
+      id: ev.id,
+      title: ev.title,
+      date: ev.date,
+      endDate: ev.endDate ?? "",
+      time: ev.time ?? "",
+      kind: ev.kind,
+      space: ev.space,
+    });
   }
 
   function handleSubmit(e: FormEvent) {
@@ -62,6 +91,7 @@ export function CalendarView() {
     const payload = {
       title: form.title.trim(),
       date: form.date,
+      endDate: form.endDate && form.endDate > form.date ? form.endDate : undefined,
       time: form.time || undefined,
       kind: form.kind,
       space: form.space,
@@ -135,7 +165,7 @@ export function CalendarView() {
         {weeks.flat().map((day) => {
           const iso = toISODate(day);
           const inMonth = day.getMonth() === month;
-          const dayEvents = eventsByDate.get(iso) ?? [];
+          const dayEvents = gridEventsByDate.get(iso) ?? [];
           const spacesPresent = new Set(dayEvents.map((e) => e.space));
           const isConflict = mode === "fusion" && spacesPresent.size > 1;
           const isToday = iso === todayISO;
@@ -186,6 +216,16 @@ export function CalendarView() {
               type="date"
               value={form.date}
               onChange={(e) => setForm({ ...form, date: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm text-neutral-900"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-neutral-600">Date de fin (optionnel)</label>
+            <input
+              type="date"
+              value={form.endDate}
+              min={form.date}
+              onChange={(e) => setForm({ ...form, endDate: e.target.value })}
               className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm text-neutral-900"
             />
           </div>
@@ -289,7 +329,14 @@ export function CalendarView() {
                     style={{ backgroundColor: spaceById.get(ev.space)?.chip }}
                   >
                     <span className="font-mono text-xs opacity-70">{ev.time ?? "--:--"}</span>
-                    <span className="flex-1">{ev.title}</span>
+                    <span className="flex-1">
+                      {ev.title}
+                      {ev.endDate && ev.endDate > ev.date && (
+                        <span className="block text-[10px] text-white/70">
+                          Du {formatDateFr(ev.date)} au {formatDateFr(ev.endDate)}
+                        </span>
+                      )}
+                    </span>
                     <span
                       className="text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5"
                       style={{ backgroundColor: spaceById.get(ev.space)?.accent, color: "#111" }}

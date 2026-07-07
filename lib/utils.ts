@@ -49,6 +49,18 @@ export const MONTH_LABEL_FR = [
 
 export const WEEKDAY_LABEL_FR = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
 
+export function eachDateInRange(startISO: string, endISO: string): string[] {
+  const start = new Date(startISO);
+  const end = new Date(endISO);
+  const dates: string[] = [];
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    dates.push(toISODate(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dates;
+}
+
 export function getMonthMatrix(year: number, month: number): Date[][] {
   const firstOfMonth = new Date(year, month, 1);
   const firstWeekday = (firstOfMonth.getDay() + 6) % 7; // Monday = 0

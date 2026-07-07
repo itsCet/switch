@@ -20,7 +20,8 @@ export interface CalendarEvent {
   space: SpaceId;
   title: string;
   date: string;
-  kind: "match" | "shooting" | "partenaire" | "publication" | "reunion";
+  endDate?: string;
+  kind: "match" | "shooting" | "partenaire" | "publication" | "reunion" | "evenement";
   time?: string;
 }
 
@@ -41,5 +42,4 @@ export interface JournalEntry {
 export interface SplitScheduleEntry {
   day: SplitDay;
   spaces: SpaceId[];
-  label: string;
 }

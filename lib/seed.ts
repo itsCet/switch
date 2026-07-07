@@ -1,4 +1,4 @@
-import { CalendarEvent, ChecklistItem, JournalEntry, SpaceTheme } from "./types";
+import { CalendarEvent, ChecklistItem, JournalEntry, SpaceTheme, SplitScheduleEntry } from "./types";
 
 export const SEED_SPACES: SpaceTheme[] = [
   {
@@ -25,6 +25,16 @@ export const SEED_SPACES: SpaceTheme[] = [
     softIsDark: true,
     chip: "#3d0e2b",
   },
+];
+
+export const SEED_SPLIT_SCHEDULE: SplitScheduleEntry[] = [
+  { day: "monday", spaces: ["gtp"] },
+  { day: "tuesday", spaces: ["gtp"] },
+  { day: "wednesday", spaces: ["gtp", "fourteen"] },
+  { day: "thursday", spaces: ["fourteen"] },
+  { day: "friday", spaces: ["fourteen"] },
+  { day: "saturday", spaces: [] },
+  { day: "sunday", spaces: [] },
 ];
 
 export const SEED_CALENDAR: CalendarEvent[] = [

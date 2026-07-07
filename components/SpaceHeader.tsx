@@ -13,7 +13,9 @@ export function SpaceHeader() {
     .filter((ev) => ev.space === activeSpace)
     .sort((a, b) => (a.date + (a.time ?? "")).localeCompare(b.date + (b.time ?? "")));
 
-  const todaysEvents = spaceEvents.filter((ev) => ev.date === todayISO);
+  const todaysEvents = spaceEvents.filter(
+    (ev) => ev.date <= todayISO && (ev.endDate ?? ev.date) >= todayISO
+  );
   const urgent = todaysEvents[0] ?? spaceEvents.find((ev) => ev.date > todayISO);
 
   const label = todaysEvents.length ? "A faire aujourd'hui" : "Prochain evenement";
@@ -38,7 +40,9 @@ export function SpaceHeader() {
           <>
             <p className="mt-1.5 font-semibold text-sm leading-snug">{urgent.title}</p>
             <p className="mt-1 text-xs text-white/80">
-              {formatDateFr(urgent.date)}
+              {urgent.endDate && urgent.endDate > urgent.date
+                ? `Du ${formatDateFr(urgent.date)} au ${formatDateFr(urgent.endDate)}`
+                : formatDateFr(urgent.date)}
               {urgent.time ? ` - ${urgent.time}` : ""} - {KIND_LABEL[urgent.kind]}
             </p>
           </>

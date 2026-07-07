@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSwitchStore } from "@/lib/store";
-import { DAY_LABEL_FR, DAY_ORDER, SPLIT_SCHEDULE } from "@/lib/spaces";
+import { DAY_LABEL_FR, DAY_ORDER } from "@/lib/spaces";
 import { SpaceId } from "@/lib/types";
 
 function getDayIndex(date: Date) {
@@ -11,15 +11,21 @@ function getDayIndex(date: Date) {
 }
 
 export function SplitScheduleBanner() {
-  const { activeSpace, spaces } = useSwitchStore();
+  const { activeSpace, spaces, splitSchedule, toggleSplitDay } = useSwitchStore();
+  const [editing, setEditing] = useState(false);
   const spaceById = useMemo(() => new Map(spaces.map((sp) => [sp.id, sp])), [spaces]);
+
+  function labelFor(spaceIds: SpaceId[]) {
+    if (spaceIds.length === 0) return "Repos";
+    return spaceIds.map((id) => spaceById.get(id)?.name ?? "?").join(" + ");
+  }
 
   const now = new Date();
   const todayIdx = getDayIndex(now);
   const tomorrowIdx = (todayIdx + 1) % 7;
 
-  const today = SPLIT_SCHEDULE[todayIdx];
-  const tomorrow = SPLIT_SCHEDULE[tomorrowIdx];
+  const today = splitSchedule[todayIdx];
+  const tomorrow = splitSchedule[tomorrowIdx];
 
   const switchesTomorrow =
     tomorrow.spaces.length > 0 &&
@@ -35,35 +41,73 @@ export function SplitScheduleBanner() {
         <div>
           <p className="text-xs uppercase tracking-wide text-neutral-400 font-medium">Planning de split</p>
           <p className="text-sm text-neutral-700 mt-0.5">
-            Aujourd&apos;hui ({DAY_LABEL_FR[today.day]}) : <strong>{today.label}</strong>
+            Aujourd&apos;hui ({DAY_LABEL_FR[today.day]}) : <strong>{labelFor(today.spaces)}</strong>
           </p>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5">
+            {DAY_ORDER.map((day, idx) => {
+              const entry = splitSchedule[idx];
+              const isToday = idx === todayIdx;
+              const colors = entry.spaces.map((id) => spaceById.get(id)?.accent).filter(Boolean);
+              return (
+                <div
+                  key={day}
+                  title={`${DAY_LABEL_FR[day]}: ${labelFor(entry.spaces)}`}
+                  className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold border ${
+                    isToday ? "ring-2 ring-offset-1 ring-neutral-800" : "border-black/10"
+                  }`}
+                  style={{
+                    background:
+                      colors.length === 2
+                        ? `linear-gradient(90deg, ${colors[0]} 50%, ${colors[1]} 50%)`
+                        : (colors[0] ?? "#e5e5e5"),
+                    color: colors.length ? "white" : "#999",
+                  }}
+                >
+                  {DAY_LABEL_FR[day].slice(0, 2)}
+                </div>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => setEditing((e) => !e)}
+            className="text-xs font-semibold px-3 py-1.5 rounded-full border border-black/10 text-neutral-600 hover:bg-neutral-50"
+          >
+            {editing ? "Fermer" : "Modifier"}
+          </button>
+        </div>
+      </div>
+
+      {editing && (
+        <div className="mt-4 space-y-1.5">
           {DAY_ORDER.map((day, idx) => {
-            const entry = SPLIT_SCHEDULE[idx];
-            const isToday = idx === todayIdx;
-            const colors = entry.spaces.map((id) => spaceById.get(id)?.accent).filter(Boolean);
+            const entry = splitSchedule[idx];
             return (
-              <div
-                key={day}
-                title={`${DAY_LABEL_FR[day]}: ${entry.label}`}
-                className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold border ${
-                  isToday ? "ring-2 ring-offset-1 ring-neutral-800" : "border-black/10"
-                }`}
-                style={{
-                  background:
-                    colors.length === 2
-                      ? `linear-gradient(90deg, ${colors[0]} 50%, ${colors[1]} 50%)`
-                      : (colors[0] ?? "#e5e5e5"),
-                  color: colors.length ? "white" : "#999",
-                }}
-              >
-                {DAY_LABEL_FR[day].slice(0, 2)}
+              <div key={day} className="flex items-center gap-2 flex-wrap">
+                <span className="w-20 shrink-0 text-xs font-medium text-neutral-600">{DAY_LABEL_FR[day]}</span>
+                {spaces.map((sp) => {
+                  const active = entry.spaces.includes(sp.id);
+                  return (
+                    <button
+                      key={sp.id}
+                      onClick={() => toggleSplitDay(day, sp.id)}
+                      className="px-2.5 py-1 rounded-full text-xs font-semibold border transition"
+                      style={
+                        active
+                          ? { backgroundColor: sp.accent, color: "#111", borderColor: sp.accent }
+                          : { borderColor: "#e5e5e5", color: "#999" }
+                      }
+                    >
+                      {sp.name}
+                    </button>
+                  );
+                })}
               </div>
             );
           })}
         </div>
-      </div>
+      )}
 
       {switchesTomorrow && newSpaceTheme && (
         <div

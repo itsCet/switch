@@ -4,13 +4,22 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, ReactN
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 import { deriveThemeFromAccent } from "./color";
-import { CalendarEvent, ChecklistItem, JournalEntry, SpaceId, SpaceTheme } from "./types";
-import { SEED_CALENDAR, SEED_CHECKLIST, SEED_JOURNAL, SEED_SPACES } from "./seed";
+import {
+  CalendarEvent,
+  ChecklistItem,
+  JournalEntry,
+  SpaceId,
+  SpaceTheme,
+  SplitDay,
+  SplitScheduleEntry,
+} from "./types";
+import { SEED_CALENDAR, SEED_CHECKLIST, SEED_JOURNAL, SEED_SPACES, SEED_SPLIT_SCHEDULE } from "./seed";
 import { AuthScreen } from "@/components/AuthScreen";
 
 interface SwitchState {
   activeSpace: SpaceId;
   spaces: SpaceTheme[];
+  splitSchedule: SplitScheduleEntry[];
   calendar: CalendarEvent[];
   checklist: ChecklistItem[];
   journal: JournalEntry[];
@@ -38,11 +47,13 @@ interface SwitchStore extends SwitchState {
   addSpace: (input: SpaceInput) => void;
   updateSpace: (id: string, input: SpaceInput) => void;
   deleteSpace: (id: string) => void;
+  toggleSplitDay: (day: SplitDay, spaceId: SpaceId) => void;
 }
 
 const DEFAULT_STATE: SwitchState = {
   activeSpace: "gtp",
   spaces: SEED_SPACES,
+  splitSchedule: SEED_SPLIT_SCHEDULE,
   calendar: SEED_CALENDAR,
   checklist: SEED_CHECKLIST,
   journal: SEED_JOURNAL,
@@ -192,8 +203,30 @@ export function SwitchProvider({ children }: { children: ReactNode }) {
           if (!s || s.spaces.length <= 1) return s;
           const spaces = s.spaces.filter((sp) => sp.id !== id);
           const activeSpace = s.activeSpace === id ? spaces[0].id : s.activeSpace;
-          return { ...s, spaces, activeSpace };
+          const splitSchedule = s.splitSchedule.map((entry) => ({
+            ...entry,
+            spaces: entry.spaces.filter((sid) => sid !== id),
+          }));
+          return { ...s, spaces, activeSpace, splitSchedule };
         }),
+      toggleSplitDay: (day, spaceId) =>
+        setState((s) =>
+          s
+            ? {
+                ...s,
+                splitSchedule: s.splitSchedule.map((entry) =>
+                  entry.day === day
+                    ? {
+                        ...entry,
+                        spaces: entry.spaces.includes(spaceId)
+                          ? entry.spaces.filter((id) => id !== spaceId)
+                          : [...entry.spaces, spaceId],
+                      }
+                    : entry
+                ),
+              }
+            : s
+        ),
     };
   }, [state, session]);
 
