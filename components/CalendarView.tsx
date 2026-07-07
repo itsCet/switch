@@ -6,14 +6,16 @@ import {
   eachDateInRange,
   formatDateFr,
   getMonthMatrix,
+  getWeekDays,
   MONTH_LABEL_FR,
   toISODate,
   WEEKDAY_LABEL_FR,
 } from "@/lib/utils";
 import { KIND_LABEL, KIND_OPTIONS } from "@/lib/calendar";
-import { CalendarEvent, SpaceId } from "@/lib/types";
+import { CalendarEvent, SpaceId, SpaceTheme } from "@/lib/types";
 
 type Mode = "fusion" | "filtre";
+type ViewMode = "month" | "week";
 
 interface FormState {
   id: string | null;
@@ -23,11 +25,13 @@ interface FormState {
   time: string;
   kind: CalendarEvent["kind"];
   space: SpaceId;
+  note: string;
 }
 
 export function CalendarView() {
   const { activeSpace, calendar, spaces, space, addEvent, updateEvent, deleteEvent } = useSwitchStore();
   const [mode, setMode] = useState<Mode>("fusion");
+  const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [viewDate, setViewDate] = useState(() => new Date());
   const [form, setForm] = useState<FormState | null>(null);
 
@@ -36,6 +40,7 @@ export function CalendarView() {
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const weeks = useMemo(() => getMonthMatrix(year, month), [year, month]);
+  const weekDays = useMemo(() => getWeekDays(viewDate), [viewDate]);
   const todayISO = toISODate(new Date());
 
   const visibleEvents = mode === "filtre" ? calendar.filter((e) => e.space === activeSpace) : calendar;
@@ -50,6 +55,7 @@ export function CalendarView() {
         map.set(d, list);
       }
     }
+    for (const list of map.values()) list.sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""));
     return map;
   }, [visibleEvents]);
 
@@ -70,7 +76,7 @@ export function CalendarView() {
   );
 
   function openCreateForm(date: string) {
-    setForm({ id: null, title: "", date, endDate: "", time: "", kind: "publication", space: activeSpace });
+    setForm({ id: null, title: "", date, endDate: "", time: "", kind: "publication", space: activeSpace, note: "" });
   }
 
   function openEditForm(ev: CalendarEvent) {
@@ -82,6 +88,7 @@ export function CalendarView() {
       time: ev.time ?? "",
       kind: ev.kind,
       space: ev.space,
+      note: ev.note ?? "",
     });
   }
 
@@ -95,6 +102,7 @@ export function CalendarView() {
       time: form.time || undefined,
       kind: form.kind,
       space: form.space,
+      note: form.note.trim() || undefined,
     };
     if (form.id) {
       updateEvent(form.id, payload);
@@ -104,11 +112,49 @@ export function CalendarView() {
     setForm(null);
   }
 
+  function goPrev() {
+    if (viewMode === "month") {
+      setViewDate(new Date(year, month - 1, 1));
+    } else {
+      const d = new Date(viewDate);
+      d.setDate(d.getDate() - 7);
+      setViewDate(d);
+    }
+  }
+
+  function goNext() {
+    if (viewMode === "month") {
+      setViewDate(new Date(year, month + 1, 1));
+    } else {
+      const d = new Date(viewDate);
+      d.setDate(d.getDate() + 7);
+      setViewDate(d);
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="font-semibold text-neutral-800">Calendrier</h2>
         <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex rounded-full bg-neutral-100 p-1 text-sm">
+            <button
+              onClick={() => setViewMode("month")}
+              className={`px-3 py-1.5 rounded-full transition ${
+                viewMode === "month" ? "bg-neutral-900 text-white" : "text-neutral-600"
+              }`}
+            >
+              Mois
+            </button>
+            <button
+              onClick={() => setViewMode("week")}
+              className={`px-3 py-1.5 rounded-full transition ${
+                viewMode === "week" ? "bg-neutral-900 text-white" : "text-neutral-600"
+              }`}
+            >
+              Semaine
+            </button>
+          </div>
           <div className="inline-flex rounded-full bg-neutral-100 p-1 text-sm">
             <button
               onClick={() => setMode("fusion")}
@@ -138,62 +184,114 @@ export function CalendarView() {
 
       <div className="mt-4 flex items-center justify-between">
         <button
-          onClick={() => setViewDate(new Date(year, month - 1, 1))}
+          onClick={goPrev}
           className="h-8 w-8 rounded-full border border-black/10 text-neutral-500 hover:bg-neutral-50"
-          aria-label="Mois precedent"
+          aria-label="Precedent"
         >
           ‹
         </button>
         <p className="font-semibold text-sm text-neutral-800">
-          {MONTH_LABEL_FR[month]} {year}
+          {viewMode === "month"
+            ? `${MONTH_LABEL_FR[month]} ${year}`
+            : `Semaine du ${formatDateFr(toISODate(weekDays[0]))} au ${formatDateFr(toISODate(weekDays[6]))}`}
         </p>
         <button
-          onClick={() => setViewDate(new Date(year, month + 1, 1))}
+          onClick={goNext}
           className="h-8 w-8 rounded-full border border-black/10 text-neutral-500 hover:bg-neutral-50"
-          aria-label="Mois suivant"
+          aria-label="Suivant"
         >
           ›
         </button>
       </div>
 
-      <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] text-neutral-400 font-medium">
-        {WEEKDAY_LABEL_FR.map((d) => (
-          <div key={d}>{d}</div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-1 mt-1">
-        {weeks.flat().map((day) => {
-          const iso = toISODate(day);
-          const inMonth = day.getMonth() === month;
-          const dayEvents = gridEventsByDate.get(iso) ?? [];
-          const spacesPresent = new Set(dayEvents.map((e) => e.space));
-          const isConflict = mode === "fusion" && spacesPresent.size > 1;
-          const isToday = iso === todayISO;
-          return (
-            <button
-              key={iso}
-              onClick={() => openCreateForm(iso)}
-              title={dayEvents.length ? `${dayEvents.length} evenement(s)` : "Ajouter un evenement"}
-              className={`relative aspect-square rounded-lg border text-left p-1 flex flex-col transition ${
-                inMonth ? "bg-white hover:bg-neutral-50" : "bg-neutral-50 text-neutral-300"
-              } ${isConflict ? "border-amber-300" : "border-black/5"} ${
-                isToday ? "ring-2 ring-neutral-800" : ""
-              }`}
-            >
-              <span className="text-[11px]">{day.getDate()}</span>
-              <div className="mt-auto flex flex-wrap gap-0.5 pb-0.5">
-                {dayEvents.slice(0, 4).map((ev) => (
-                  <span
-                    key={ev.id}
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: spaceById.get(ev.space)?.accent }}
-                  />
-                ))}
+      {viewMode === "month" && (
+        <>
+          <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] text-neutral-400 font-medium">
+            {WEEKDAY_LABEL_FR.map((d) => (
+              <div key={d}>{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1 mt-1">
+            {weeks.flat().map((day) => {
+              const iso = toISODate(day);
+              const inMonth = day.getMonth() === month;
+              const dayEvents = gridEventsByDate.get(iso) ?? [];
+              const spacesPresent = new Set(dayEvents.map((e) => e.space));
+              const isConflict = mode === "fusion" && spacesPresent.size > 1;
+              const isToday = iso === todayISO;
+              return (
+                <button
+                  key={iso}
+                  onClick={() => openCreateForm(iso)}
+                  title={dayEvents.length ? `${dayEvents.length} evenement(s)` : "Ajouter un evenement"}
+                  className={`relative aspect-square rounded-lg border text-left p-1 flex flex-col transition ${
+                    inMonth ? "bg-white hover:bg-neutral-50" : "bg-neutral-50 text-neutral-300"
+                  } ${isConflict ? "border-amber-300" : "border-black/5"} ${
+                    isToday ? "ring-2 ring-neutral-800" : ""
+                  }`}
+                >
+                  <span className="text-[11px]">{day.getDate()}</span>
+                  <div className="mt-auto flex flex-wrap gap-0.5 pb-0.5">
+                    {dayEvents.slice(0, 4).map((ev) => (
+                      <span
+                        key={ev.id}
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ backgroundColor: spaceById.get(ev.space)?.accent }}
+                      />
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {viewMode === "week" && (
+        <div className="mt-4 space-y-2">
+          {weekDays.map((day) => {
+            const iso = toISODate(day);
+            const dayEvents = gridEventsByDate.get(iso) ?? [];
+            const spacesPresent = new Set(dayEvents.map((e) => e.space));
+            const isConflict = mode === "fusion" && spacesPresent.size > 1;
+            const isToday = iso === todayISO;
+            return (
+              <div
+                key={iso}
+                className={`rounded-xl border p-3 ${
+                  isConflict ? "border-amber-300 bg-amber-50" : "border-black/5 bg-neutral-50"
+                } ${isToday ? "ring-2 ring-neutral-800" : ""}`}
+              >
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-semibold text-neutral-500 uppercase">{formatDateFr(iso)}</p>
+                    {isConflict && (
+                      <span className="text-[11px] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                        ⚠ conflit
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => openCreateForm(iso)}
+                    className="text-[11px] font-semibold text-neutral-500 hover:text-neutral-800"
+                  >
+                    + Ajouter
+                  </button>
+                </div>
+                {dayEvents.length > 0 ? (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {dayEvents.map((ev) => (
+                      <EventPill key={ev.id} ev={ev} theme={spaceById.get(ev.space)} onClick={() => openEditForm(ev)} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-neutral-400">Rien de prevu</p>
+                )}
               </div>
-            </button>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {form && (
         <form
@@ -266,6 +364,16 @@ export function CalendarView() {
               ))}
             </select>
           </div>
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-medium text-neutral-600">Note (optionnel)</label>
+            <textarea
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+              rows={2}
+              placeholder="Details, materiel a apporter, validation en attente..."
+              className="mt-1 w-full rounded-lg border border-black/10 bg-white p-2 text-sm text-neutral-900 placeholder:text-neutral-400 resize-none focus:outline-none focus:ring-2 focus:ring-neutral-800"
+            />
+          </div>
 
           <div className="sm:col-span-2 flex items-center justify-between">
             {form.id ? (
@@ -301,58 +409,74 @@ export function CalendarView() {
         </form>
       )}
 
-      <div className="mt-5 space-y-3">
-        {grouped.map(([date, events]) => {
-          const spacesPresent = new Set(events.map((e) => e.space));
-          const isConflict = mode === "fusion" && spacesPresent.size > 1;
-          return (
-            <div
-              key={date}
-              className={`rounded-xl border p-3 ${
-                isConflict ? "border-amber-300 bg-amber-50" : "border-black/5 bg-neutral-50"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <p className="text-xs font-semibold text-neutral-500 uppercase">{formatDateFr(date)}</p>
-                {isConflict && (
-                  <span className="text-[11px] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                    ⚠ conflit potentiel entre espaces
-                  </span>
-                )}
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {events.map((ev) => (
-                  <button
-                    key={ev.id}
-                    onClick={() => openEditForm(ev)}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white text-left hover:opacity-90"
-                    style={{ backgroundColor: spaceById.get(ev.space)?.chip }}
-                  >
-                    <span className="font-mono text-xs opacity-70">{ev.time ?? "--:--"}</span>
-                    <span className="flex-1">
-                      {ev.title}
-                      {ev.endDate && ev.endDate > ev.date && (
-                        <span className="block text-[10px] text-white/70">
-                          Du {formatDateFr(ev.date)} au {formatDateFr(ev.endDate)}
-                        </span>
-                      )}
+      {viewMode === "month" && (
+        <div className="mt-5 space-y-3">
+          {grouped.map(([date, events]) => {
+            const spacesPresent = new Set(events.map((e) => e.space));
+            const isConflict = mode === "fusion" && spacesPresent.size > 1;
+            return (
+              <div
+                key={date}
+                className={`rounded-xl border p-3 ${
+                  isConflict ? "border-amber-300 bg-amber-50" : "border-black/5 bg-neutral-50"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs font-semibold text-neutral-500 uppercase">{formatDateFr(date)}</p>
+                  {isConflict && (
+                    <span className="text-[11px] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                      ⚠ conflit potentiel entre espaces
                     </span>
-                    <span
-                      className="text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5"
-                      style={{ backgroundColor: spaceById.get(ev.space)?.accent, color: "#111" }}
-                    >
-                      {KIND_LABEL[ev.kind]}
-                    </span>
-                  </button>
-                ))}
+                  )}
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {events.map((ev) => (
+                    <EventPill key={ev.id} ev={ev} theme={spaceById.get(ev.space)} onClick={() => openEditForm(ev)} />
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
-        {grouped.length === 0 && (
-          <p className="text-sm text-neutral-400 text-center py-6">Aucun evenement pour le moment.</p>
-        )}
-      </div>
+            );
+          })}
+          {grouped.length === 0 && (
+            <p className="text-sm text-neutral-400 text-center py-6">Aucun evenement pour le moment.</p>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+function EventPill({
+  ev,
+  theme,
+  onClick,
+}: {
+  ev: CalendarEvent;
+  theme: SpaceTheme | undefined;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-start gap-2 rounded-lg px-3 py-2 text-sm text-white text-left hover:opacity-90"
+      style={{ backgroundColor: theme?.chip }}
+    >
+      <span className="font-mono text-xs opacity-70 mt-0.5">{ev.time ?? "--:--"}</span>
+      <span className="flex-1">
+        {ev.title}
+        {ev.endDate && ev.endDate > ev.date && (
+          <span className="block text-[10px] text-white/70">
+            Du {formatDateFr(ev.date)} au {formatDateFr(ev.endDate)}
+          </span>
+        )}
+        {ev.note && <span className="block text-[11px] text-white/70 mt-0.5">{ev.note}</span>}
+      </span>
+      <span
+        className="text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5 shrink-0"
+        style={{ backgroundColor: theme?.accent, color: "#111" }}
+      >
+        {KIND_LABEL[ev.kind]}
+      </span>
+    </button>
   );
 }

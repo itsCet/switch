@@ -61,6 +61,20 @@ export function eachDateInRange(startISO: string, endISO: string): string[] {
   return dates;
 }
 
+export function getWeekDays(date: Date): Date[] {
+  const weekdayIdx = (date.getDay() + 6) % 7; // Monday = 0
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - weekdayIdx);
+
+  const days: Date[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
 export function getMonthMatrix(year: number, month: number): Date[][] {
   const firstOfMonth = new Date(year, month, 1);
   const firstWeekday = (firstOfMonth.getDay() + 6) % 7; // Monday = 0

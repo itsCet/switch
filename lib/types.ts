@@ -23,6 +23,7 @@ export interface CalendarEvent {
   endDate?: string;
   kind: "match" | "shooting" | "partenaire" | "publication" | "reunion" | "evenement";
   time?: string;
+  note?: string;
 }
 
 export interface ChecklistItem {
